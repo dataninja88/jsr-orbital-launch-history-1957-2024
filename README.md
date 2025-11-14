@@ -61,6 +61,7 @@ Designed for:
 
 - `jsr_orbital_launches_1957_2024.csv`  
 - `codebook_jsr.md`  
+- `jsr_analysis.Rmd`     ← newly added reproducible analysis
 - `CITATION.cff`  
 - `LICENSE`  
 
@@ -127,14 +128,16 @@ https://github.com/dataninja88/jsr-orbital-launch-history-1957-2024
 Source data: Jonathan McDowell’s Satellite Launch Log (JSR)
 License: CC BY 4.0
 
-📜 License
+## 📜 License
 
-Released under Creative Commons Attribution 4.0 International (CC BY 4.0).
+This dataset is released under the **Creative Commons Attribution 4.0 International (CC BY 4.0)** license.
 
-You may share or adapt the data with proper credit.
+You are free to share and adapt the data with proper credit.
 
-License details:
+Full license text:  
+See the `LICENSE` file in this repository.  
 https://creativecommons.org/licenses/by/4.0/
+
 
 🙏 Acknowledgements
 
