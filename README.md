@@ -59,17 +59,47 @@ Designed for:
 
 ## 📁 Files Included
 
-- `jsr_orbital_launches_1957_2024.csv`  
-- `codebook_jsr.md`  
-- `jsr_analysis.Rmd`     ← newly added reproducible analysis
-- `CITATION.cff`  
-- `LICENSE`  
-
+jsr-orbital-launch-history-1957-2024/
+├── README.md
+├── LICENSE
+│
+├── data/
+│   ├── jsr_orbital_launches_1957_2024.csv      # canonical 6,617-launch dataset
+│   ├── LaunchSites_Final_Geocoded.csv           # 51-site geocoded atlas file
+│   └── launchlog.tsv                            # original JSR raw export (~27k rows)
+│
+├── liftoff_jsr_data_engineering.Rmd             # full data-engineering workflow
+└── liftoff_jsr_visuals.Rmd                      # analysis + visuals (timeline, atlas, spacex, swarm)
 ---
 
-## 🧬 Data Dictionary (Codebook)
+### 📦 File Descriptions
 
-> Full details are in `codebook_jsr.md`. Core fields:
+- **jsr_orbital_launches_1957_2024.csv**  
+  Clean, deduped, machine-ready orbital launch dataset (1957–2024).
+
+- **LaunchSites_Final_Geocoded.csv**  
+  Canonical list of 51 global launch sites with validated lat/long coordinates.
+
+- **launchlog.tsv**  
+  Original JSR raw dataset (~27,000 rows) used in ETL to derive the final 6,617 orbital launches.
+
+- **liftoff_jsr_data_engineering.Rmd**  
+  Human-readable R Markdown showing the entire transformation pipeline  
+  from raw JSR → cleaned dataset, including deduping, site normalization, geocoding, validation.
+
+- **liftoff_jsr_visuals.Rmd**  
+  Reproducible analysis + plotting code for:  
+    - Humanity launch timeline  
+    - Liftoff Atlas world bubble map  
+    - Site dominance charts  
+    - SpaceX vs Humanity trend  
+    - Cosmic Swarm (1 dot = 1 launch)
+
+- **LICENSE**  
+  MIT license for open reuse.
+
+
+## 🧬 Data Dictionary (Codebook)
 
 | Column         | Type      | Description                                         |
 |----------------|-----------|-----------------------------------------------------|
