@@ -55,22 +55,22 @@ Designed for:
 - **Rows:** 6,617  
 - **Columns:** 12  
 
----
-
 ## 📁 Files Included
 
+```
 jsr-orbital-launch-history-1957-2024/
 ├── README.md
 ├── LICENSE
 │
 ├── data/
-│   ├── jsr_orbital_launches_1957_2024.csv      # canonical 6,617-launch dataset
-│   ├── LaunchSites_Final_Geocoded.csv           # 51-site geocoded atlas file
-│   └── launchlog.tsv                            # original JSR raw export (~27k rows)
+│   ├── jsr_orbital_launches_1957_2024.csv        # canonical 6,617-launch dataset
+│   ├── LaunchSites_Final_Geocoded.csv            # 51-site geocoded atlas file
+│   └── launchlog.tsv                             # original JSR raw export (~27k rows)
 │
-├── liftoff_jsr_data_engineering.Rmd             # full data-engineering workflow
-└── liftoff_jsr_visuals.Rmd                      # analysis + visuals (timeline, atlas, spacex, swarm)
----
+├── liftoff_jsr_data_engineering.Rmd              # full data-engineering workflow
+└── liftoff_jsr_visuals.Rmd                       # visuals: timeline, atlas, SpaceX, swarm
+```
+
 
 ### 📦 File Descriptions
 
