@@ -1,186 +1,213 @@
 # JSR Orbital Launch History (1957–2024)
-*A Clean, Deduped, Machine-Ready Dataset of Every Verified Orbital Launch*
 
-**Maintained by:** Dev Verma (`dataninja88`)  
-**Source Authority:** Jonathan’s Space Report (JSR)
+A Clean, Deduped, Machine-Ready Dataset of Every Verified Orbital Launch
 
----
+Maintained by: Dev Verma (@dataninja88)
+Primary Source: Jonathan McDowell’s Satellite Launch Log (JSR)
 
-## 📌 Overview
+# Overview
 
-This repository transforms Jonathan McDowell’s Satellite Launch Log (JSR) into a clean, standardized, deduped dataset of every verified orbital launch from 1957 to 2024.
+This repository provides a fully engineered, launch-level dataset of every verified orbital launch from 1957 to 2024, derived directly from Jonathan McDowell’s JSR logs.
 
-It also powers my **Liftoff Atlas** and **Cosmic Swarm** visualizations created for the **Maven Space Challenge 2025**.
+The raw JSR export contains:
 
-Unlike many public datasets that contain:
+multiple payload rows per launch
 
-- repeated entries  
-- mission-level duplication  
-- inconsistent agency naming  
-- mixed orbital / suborbital records  
-- gaps in early-year coverage  
+inconsistent naming conventions
 
-this dataset provides a precise **one-row-per-launch** structure, validated for:
+mixed orbital/suborbital outcomes
 
-- unique `launch_id`  
-- consistent date parsing  
-- correct year extraction  
-- outcome classification using strict JSR criteria  
-- removal of all mission-level duplicates  
+historical formatting variations
 
-Designed for:
+numerous mission-level duplicates
 
-- scientific studies  
-- aerospace analytics  
-- orbital cadence research  
-- longitudinal modelling  
-- data visualization  
-- machine learning pipelines  
+This project resolves all of that, delivering a canonical one-row-per-launch structure, validated against both JSR and cross-referenced annual totals.
 
----
+# The dataset powers:
 
-## 📊 Dataset Summary
+Liftoff Atlas (global bubble map)
 
-- **Total verified orbital launches (1957–2024):** 6,617  
+Cosmic Swarm (1 dot = 1 launch)
 
-**Outcome breakdown:**
+Humanity Launch Timeline
 
-- **Success:** 6,126 (92.6%)  
-- **Failure:** 410 (6.2%)  
-- **Partial / other:** 81 (1.2%)  
+SpaceX vs Humanity cadence analysis
 
-**Structure:**
+Launch-site dominance models
 
-- **Time span:** 1957–2024  
-- **Rows:** 6,617  
-- **Columns:** 12  
+Built for:
 
-## 📁 Files Included
+aerospace analytics
+
+academic research
+
+visualization
+
+longitudinal modeling
+
+machine-learning pipelines
+
+# Dataset Summary
+Metric	Value
+Total Orbital Launches (1957–2024)	6,617
+Time Span	1957 to 2024
+Rows	6,617
+Columns	12
+Source Rows (Raw JSR)	~27,239 payload-level rows
+Outcome Breakdown
+
+Success: 6,126 (92.6%)
+
+Failure: 410 (6.2%)
+
+Partial / Other: 81 (1.2%)
+
+#📁 Repository Structure
 
 ```
 jsr-orbital-launch-history-1957-2024/
 ├── README.md
 ├── LICENSE
-│
 ├── data/
-│   ├── jsr_orbital_launches_1957_2024.csv        # canonical 6,617-launch dataset
-│   ├── LaunchSites_Final_Geocoded.csv            # 51-site geocoded atlas file
-│   └── launchlog.tsv                             # original JSR raw export (~27k rows)
-│
-├── liftoff_jsr_data_engineering.Rmd              # full data-engineering workflow
-└── liftoff_jsr_visuals.Rmd                       # visuals: timeline, atlas, SpaceX, swarm
+│   ├── jsr_orbital_launches_1957_2024.csv      # canonical 6,617-launch dataset
+│   ├── LaunchSites_Final_Geocoded.csv          # 51 validated launch-site coordinates
+│   └── launchlog.tsv                           # original JSR raw export (~27k rows)
+├── docs/
+│   ├── liftoff_jsr_data_engineering.Rmd        # full reproducible ETL pipeline
+│   └── liftoff_jsr_visuals.Rmd                 # Atlas + timeline + swarm + SpaceX visuals
+└── outputs/                                    # optional exports added by users
 ```
 
+# File Descriptions
+jsr_orbital_launches_1957_2024.csv
 
-### 📦 File Descriptions
+Clean, deduped, launch-level dataset. One row = one launch.
 
-- **jsr_orbital_launches_1957_2024.csv**  
-  Clean, deduped, machine-ready orbital launch dataset (1957–2024).
+LaunchSites_Final_Geocoded.csv
 
-- **LaunchSites_Final_Geocoded.csv**  
-  Canonical list of 51 global launch sites with validated lat/long coordinates.
+Canonical table of 51 global launch sites, manually validated and geocoded for map-ready use.
 
-- **launchlog.tsv**  
-  Original JSR raw dataset (~27,000 rows) used in ETL to derive the final 6,617 orbital launches.
+launchlog.tsv
 
-- **liftoff_jsr_data_engineering.Rmd**  
-  Human-readable R Markdown showing the entire transformation pipeline  
-  from raw JSR → cleaned dataset, including deduping, site normalization, geocoding, validation.
+# Original Jonathan’s Space Report raw payload-level export (27k rows).
 
-- **liftoff_jsr_visuals.Rmd**  
-  Reproducible analysis + plotting code for:  
-    - Humanity launch timeline  
-    - Liftoff Atlas world bubble map  
-    - Site dominance charts  
-    - SpaceX vs Humanity trend  
-    - Cosmic Swarm (1 dot = 1 launch)
+docs/liftoff_jsr_data_engineering.Rmd
 
-- **LICENSE**  
-  MIT license for open reuse.
+Complete R Markdown documenting the entire ETL pipeline:
 
+raw ingestion
 
-## 🧬 Data Dictionary (Codebook)
+date parsing
 
-| Column         | Type      | Description                                         |
-|----------------|-----------|-----------------------------------------------------|
-| `launch_id`    | character | Unique identifier for each launch event             |
-| `launch_date`  | datetime  | Parsed launch timestamp                             |
-| `year`         | integer   | Launch year                                         |
-| `rocket`       | character | Booster or launch vehicle                           |
-| `agency`       | character | Launch operator                                     |
-| `location`     | character | Launch site or pad                                  |
-| `success`      | logical   | Mission success flag                                |
-| `success_hard` | logical   | Strict JSR-based success flag                       |
-| `notes`        | character | Additional context from JSR logs                    |
-| `…`            |           | Fields preserved exactly from JSR where relevant    |
+normalization
 
----
+orbital filtering
 
-## 🔬 Methodology (Reproducible)
+dedupe logic
 
-End-to-end workflow:
+launch-ID construction
 
-1. Imported raw JSR logs using `tidyverse`.  
-2. Normalized and cleaned date formats.  
-3. Standardized naming for rockets, agencies, and locations.  
-4. Removed all mission-level duplicate entries.  
-5. Collapsed payload-level rows into unique launch events.  
-6. Validated totals against:  
-   - official JSR annual counts  
-   - manually verified launch totals  
-7. Confirmed **duplicate `launch_id` count = 0**.
+validation
 
-Result: a canonical **6,617-launch** dataset suitable for research, analytics, and production pipelines.
+final export
 
----
+Results in exactly 6,617 unique launches.
 
-## 📥 Loading the Dataset
+docs/liftoff_jsr_visuals.Rmd
 
-### R
+# Reproducible visualizations:
 
-```r
+Humanity Launch Timeline
+
+Liftoff Atlas (global bubble map)
+
+Cosmic Swarm (one dot per launch)
+
+SpaceX vs Humanity cadence
+
+Launch site dominance charts
+
+# Data Dictionary
+
+Column	Type	Description
+launch_id	character	Unique launch identifier (timestamp + site + pad + vehicle)
+dt_min	datetime	Launch time rounded to nearest minute
+site_raw	character	Launch site (normalized)
+pad_raw	character	Pad / LC identifier
+vehicle	character	Launch vehicle
+agency	character	Launch operator
+lv_state	character	LV state code (JSR convention)
+launch_code	character	JSR orbital/failure/partial outcome
+n_payload_rows	integer	Count of payload rows collapsed
+success_hard	logical	Strict success flag
+success	logical	Convenience success flag
+
+# Methodology (Reproducible)
+The full pipeline is documented here:
+/docs/liftoff_jsr_data_engineering.Rmd
+
+Summary of the R-based workflow:
+
+Import raw JSR .tsv (payload-level).
+
+Clean column names & standardize structure.
+
+Parse historical date formats (multiple patterns).
+
+Filter to orbital / failure codes (OS, OF, OP, OU).
+
+Normalize text fields (vehicle, agency, site, pad).
+
+Build a stable launch_id
+using timestamp + site + pad + vehicle + flight ID.
+
+Collapse payload rows → 1 launch per row.
+
+Validate counts against canonical totals.
+
+Export final 6,617-row dataset.
+
+Every step is transparent, fully reproducible, and tailored to preserve scientific accuracy.
+
+# Loading the Dataset
+R
 library(readr)
 
 df <- read_csv(
-  "jsr_orbital_launches_1957_2024.csv",
+  "data/jsr_orbital_launches_1957_2024.csv",
   show_col_types = FALSE
 )
-```
 
-🧾 Academic Citation
+# Citation
 
 If you use this dataset, please cite:
 
-Verma, D. (2024). JSR Orbital Launch History (1957–2024):
-A Clean, Deduped Dataset of Verified Orbital Launches.
-https://github.com/dataninja88/jsr-orbital-launch-history-1957-2024
+Verma, D. (2024).
+JSR Orbital Launch History (1957–2024): A Clean, Deduped Dataset of Verified Orbital Launches.
+GitHub: https://github.com/dataninja88/jsr-orbital-launch-history-1957-2024
 
 Source data: Jonathan McDowell’s Satellite Launch Log (JSR)
 License: CC BY 4.0
 
-## 📜 License
+# License
 
-This dataset is released under the **Creative Commons Attribution 4.0 International (CC BY 4.0)** license.
+This dataset is released under Creative Commons Attribution 4.0 (CC BY 4.0).
+You may share, adapt, and build upon it with attribution.
 
-You are free to share and adapt the data with proper credit.
+Full license in LICENSE.
 
-Full license text:  
-See the `LICENSE` file in this repository.  
-https://creativecommons.org/licenses/by/4.0/
+# Acknowledgements
 
+Jonathan McDowell for maintaining JSR, the gold standard for orbital launch records.
 
-🙏 Acknowledgements
+Global launch providers (NASA, ESA, CNSA, Roscosmos, ISRO, SpaceX, and more).
 
-Jonathan McDowell, for maintaining JSR, widely regarded as a gold standard for launch verification
+The broader aerospace data community for cross-referencing annual totals.
 
-NASA, ESA, ISRO, Roscosmos, CNSA, SpaceX
-
-The wider space analytics community for cross-checking annual totals
-
-🛰 Maintained By
+# Maintained By
 
 Dev Verma
 Data Analyst · R Programmer · Aviation & Space Data Enthusiast
-
 📧 dev.dataanalyst8@gmail.com
+
 🌐 GitHub: @dataninja88
