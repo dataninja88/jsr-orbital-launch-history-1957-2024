@@ -1,0 +1,239 @@
+---
+title: "Liftoff Atlas | JSR Data Engineering Pipeline"
+subtitle: "From JSR launchlog.tsv (27k rows) 6,617 unique orbital launches"
+author: "Dev Verma (@dataninja88)"
+date: "`r Sys.Date()`"
+output:
+html_document:
+---
+
+|This document reconstructs the full data engineering workflow used to
+derive a canonical set of 6,617 unique orbital launches (1957–2024)
+from the Jonathan’s Space Report (JSR) launchlog.tsv file. The pipeline
+prioritizes reproducibility, transparent assumptions, and minimal
+transformation logic for peer validation.|
+
+## Loading Packages
+
+```{r}
+knitr::opts_chunk$set(
+echo = TRUE,
+warning = FALSE,
+message = FALSE
+)
+
+library(readr)
+library(dplyr)
+library(lubridate)
+library(janitor)
+library(stringr)
+```
+
+## Step 1: Load Raw JSR Launch Log
+
+The original Jonathan’s Space Report launch log is stored as a TSV file,
+data/launchlog.tsv, with one row per payload or object.
+
+```{r}
+
+jsr_raw <- read_tsv(
+  "data/launchlog.tsv",
+  col_names = c(
+    "number_launch_tag",
+    "launch_date",
+    "piece",
+    "type",
+    "name",
+    "pl_name",
+    "jcat",
+    "sat_owner",
+    "sat_state",
+    "lv_type",
+    "flight_id",
+    "platform",
+    "launch_site",
+    "launch_pad",
+    "ascent_site",
+    "ascent_pad",
+    "agency",
+    "lv_state",
+    "launch_code",
+    "lt_cite"
+  ),
+  trim_ws = TRUE,
+  show_col_types = FALSE
+)
+```
+
+## Step 2 : Clean Column Names and Parse Dates
+
+JSR uses several date formats, for example:
+
+"1957 Oct 4 1928:34"
+"1957 Oct 4 19:28"
+"1957 Oct 4"
+
+I defined a small helper to parse these safely, then:
+
+Create a POSIXct datetime dt.
+Extract year.
+Keep only launches up to and including 2024.
+
+```{r}
+
+jsr_raw <- jsr_raw |>
+clean_names()
+
+parse_jsr_dt <- function(x){
+x <- str_squish(x)
+suppressWarnings(
+parse_date_time(
+x,
+orders = c(
+"Y b d HMS",
+"Y b d HM",
+"Y b d H",
+"Y b d",
+"Y-m-d HMS",
+"Y-m-d"
+)
+)
+)
+}
+
+jsr1 <- jsr_raw |>
+mutate(
+dt   = parse_jsr_dt(launch_date),
+year = year(dt)
+) |>
+filter(!is.na(dt), year <= 2024)
+
+cat("After date parsing + year filter:", nrow(jsr1), "rows\n")
+summary(jsr1$year)
+```
+
+## Step 3: Normalise Key Text Fields
+For robust grouping and ID construction, I normalised:
+
+rocket from lv_type
+agency from agency
+location from launch_site
+pad_raw from launch_pad
+flight_id_clean from flight_id
+
+```{r}
+normalize <- function(x){
+x |>
+str_squish() |>
+str_to_lower()
+}
+
+jsr2 <- jsr1 |>
+mutate(
+rocket          = normalize(lv_type),
+agency          = normalize(agency),
+location        = normalize(launch_site),
+pad_raw         = normalize(launch_pad),
+flight_id_clean = normalize(flight_id)
+)
+
+cat("After normalisation:", nrow(jsr2), "rows\n")
+dplyr::glimpse(jsr2)
+```
+
+## Step 4: Filter to Orbital / Failure Launch Codes
+JSR’s launch_code encodes outcome and type.
+Here I keep launches whose codes start with O or F which match your original filter and downstream counts.
+
+```{r}
+jsr_orbital <- jsr2 |>
+filter(str_detect(launch_code, "^[OF]"))
+
+cat("After orbital / failure filter:", nrow(jsr_orbital), "rows\n")
+head(table(jsr_orbital$launch_code), 10)
+```
+
+## Step 5: Collapse Payload Rows → One Row per Launch
+JSR is still payload-level.
+To get one row per launch, we build a stable launch_id using:
+
+launch time rounded to the minute
+location
+pad_raw
+rocket
+flight_id_clean
+
+That combination is what collapses the 23k+ payload rows to 6,617 unique launches.
+
+```{r}
+jsr_launches <- jsr_orbital |>
+mutate(
+dt_min = floor_date(dt, unit = "minute"),
+launch_id = str_c(
+format(dt_min, "%Y-%m-%d %H:%M"),
+location,
+pad_raw,
+rocket,
+flight_id_clean,
+sep = " | "
+)
+) |>
+group_by(launch_id) |>
+summarise(
+dt_min         = min(dt_min, na.rm = TRUE),
+site_raw       = first(location),
+pad_raw        = first(pad_raw),
+vehicle        = first(rocket),
+agency         = first(agency),
+lv_state       = first(lv_state),
+launch_code    = first(launch_code),
+n_payload_rows = n(),
+.groups        = "drop"
+) |>
+arrange(dt_min)
+
+cat("Unique launches:", nrow(jsr_launches), "\n")
+length(unique(jsr_launches$launch_id))
+head(jsr_launches$launch_id, 3)
+```
+
+## Step 6: Classify Outcomes and Save Canonical CSV
+
+Now map launch_code into simple outcome labels and save the dataset
+
+```{r}
+jsr_launches <- jsr_launches |>
+mutate(
+outcome = case_when(
+str_starts(launch_code, "OS") ~ "Success",
+str_starts(launch_code, "OF") ~ "Failure",
+str_starts(launch_code, "OP") |
+str_starts(launch_code, "OU") ~ "Partial / other",
+TRUE ~ "Other"
+),
+success_hard = outcome == "Success",
+success      = success_hard
+)
+
+jsr_launches |>
+count(outcome, name = "launches") |>
+mutate(
+total = sum(launches),
+share = round(100 * launches / total, 1)
+)
+
+# Save rebuilt dataset (R project `data/` folder)
+
+write_csv(jsr_launches, "data/jsr_unique_launches_1957_2024_rebuilt.csv")
+
+cat("Saved: data/jsr_unique_launches_1957_2024_rebuilt.csv\n")
+```
+
+
+End Notes|
+
+The pipeline reduces the original ~27,239 JSR records to 6,617 unique
+orbital launches after rigorous cleaning, normalization, timestamp
+alignment, and payload-row collapsing. This dataset now serves as the
+canonical source for all downstream Liftoff Atlas visualizations:
+timeline, world map, site rankings, vehicle trends, and Cosmic Swarm.
