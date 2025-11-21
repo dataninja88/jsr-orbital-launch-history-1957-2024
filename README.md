@@ -128,19 +128,21 @@ SpaceX vs Humanity cadence
 Launch site dominance charts
 
 # Data Dictionary
+```
+| Column         | Type      | Description                                      |
+|----------------|-----------|--------------------------------------------------|
+| `launch_id`    | character | Unique identifier for each launch event         |
+| `launch_date`  | datetime  | Parsed launch timestamp                          |
+| `year`         | integer   | Launch year                                      |
+| `rocket`       | character | Booster or launch vehicle                        |
+| `agency`       | character | Launch operator                                  |
+| `location`     | character | Launch site or pad                               |
+| `success`      | logical   | Mission success flag                             |
+| `success_hard` | logical   | Strict JSR-based success flag                    |
+| `notes`        | character | Additional context from JSR logs                 |
+| `…`            |           | Fields preserved exactly from JSR where relevant |
 
-Column	Type	Description
-launch_id	character	Unique launch identifier (timestamp + site + pad + vehicle)
-dt_min	datetime	Launch time rounded to nearest minute
-site_raw	character	Launch site (normalized)
-pad_raw	character	Pad / LC identifier
-vehicle	character	Launch vehicle
-agency	character	Launch operator
-lv_state	character	LV state code (JSR convention)
-launch_code	character	JSR orbital/failure/partial outcome
-n_payload_rows	integer	Count of payload rows collapsed
-success_hard	logical	Strict success flag
-success	logical	Convenience success flag
+```
 
 # Methodology (Reproducible)
 The full pipeline is documented here:
@@ -187,13 +189,9 @@ JSR Orbital Launch History (1957–2024): A Clean, Deduped Dataset of Verified O
 GitHub: https://github.com/dataninja88/jsr-orbital-launch-history-1957-2024
 
 Source data: Jonathan McDowell’s Satellite Launch Log (JSR)
-License: CC BY 4.0
+
 
 # License
-
-This dataset is released under Creative Commons Attribution 4.0 (CC BY 4.0).
-You may share, adapt, and build upon it with attribution.
-
 Full license in LICENSE.
 
 # Acknowledgements
