@@ -1,60 +1,85 @@
-# JSR Orbital Launch History (1957–2024)
+# Liftoff Atlas | Humanity’s Orbital Launch History (1957–2024)
 
-A Clean, Deduped, Machine-Ready Dataset of Every Verified Orbital Launch
+By Dev Verma
+# Repository: jsr-orbital-launch-history-1957-2024
 
-Maintained by: Dev Verma (@dataninja88)
-Primary Source: Jonathan McDowell’s Satellite Launch Log (JSR)
+This repository contains the canonical, reproducible, launch-level dataset of 6,617 verified orbital launches (1957–2024), engineered from Jonathan McDowell’s Satellite Launch Log (JSR). It also hosts the full data-engineering pipeline, validation steps, and all final visualizations used for the 2025 Maven Space Data Challenge.
 
-# Overview
+# Project Summary
 
-This repository provides a fully engineered, launch-level dataset of every verified orbital launch from 1957 to 2024, derived directly from Jonathan McDowell’s JSR logs.
+Every orbital launch begins as a line of code, a burst of fire, and a database entry.
+Together, these events trace humanity’s ascent into orbit.
 
-The raw JSR export contains:
+For the Maven Space Data Challenge 2025, I rebuilt the orbital record from the ground up, cross-validating:
 
-multiple payload rows per launch
+JSR launchlog.tsv (≈27k payload rows)
 
-inconsistent naming conventions
+cleaned + deduped to 6,617 unique orbital launches
 
-mixed orbital/suborbital outcomes
+timestamp normalization
 
-historical formatting variations
+outcome classification
 
-numerous mission-level duplicates
+site canonicalization (51 launch sites)
 
-This project resolves all of that, delivering a canonical one-row-per-launch structure, validated against both JSR and cross-referenced annual totals.
+R-based reproducibility from ingestion → final charts
 
-# The dataset powers:
+This repository contains the exact pipeline and all supporting datasets required to regenerate the full project.
 
-Liftoff Atlas (global bubble map)
+# Key Outputs in This Repository
 
-Cosmic Swarm (1 dot = 1 launch)
+1. Canonical Verified Launch Dataset
 
-Humanity Launch Timeline
+✔ data/jsr_unique_launches_1957_2024.csv
+→ 6,617 deduped launches
+→ 1957–2024
+→ Launch-true: one row = one real launch, no estimates
 
-SpaceX vs Humanity cadence analysis
+2. Data-Engineering Pipeline
 
-Launch-site dominance models
+✔ docs/Liftoff Atlas JSR Data Engineering Pipeline by DV.Rmd
+→ full cleaning, collapsing, datetime parsing, and validation
+→ defines canonical launch_id
+→ produces all downstream-ready tables
 
-Built for:
+3. Cosmic Swarm (Two Variants)
 
-aerospace analytics
+Historical (1-dot-per-launch)
 
-academic research
+Launch-true
 
-visualization
+6,617 points
 
-longitudinal modeling
+Used for analysis, timeline interpretation, decade rings
 
-machine-learning pipelines
+Dense Poster Variant (with grain)
 
-# Dataset Summary
-Metric	Value
-Total Orbital Launches (1957–2024)	6,617
-Time Span	1957 to 2024
-Rows	6,617
-Columns	12
-Source Rows (Raw JSR)	~27,239 payload-level rows
-Outcome Breakdown
+Adds a procedural grain halo around the launch-true base
+
+Used only for the published poster
+
+Fully documented in the Rmd
+
+4. Liftoff Atlas Poster
+
+✔ docs/Liftoff_Atlas_Maven_Challenge_Poster.png
+The full 2025 Maven Space Challenge submission containing:
+
+Cosmic Swarm
+
+Global launch footprint (51 sites)
+
+Humanity’s launch timeline
+
+SpaceX trajectory chart
+
+Rendered in R (ggplot2) and refined in Figma.
+
+# Launch KPIs (1957–2024)
+
+Derived from the canonical JSR dataset.
+
+Total launches: 6,617
 
 Success: 6,126 (92.6%)
 
@@ -62,150 +87,114 @@ Failure: 410 (6.2%)
 
 Partial / Other: 81 (1.2%)
 
-#📁 Repository Structure
+# Cosmic Swarm Variants (A & B)
+A) Historical Swarm (Launch-True)
 
+Exactly 6,617 points
+
+One point per verified orbital launch
+
+Decade rings, year-radiating structure
+
+Highlight: Plesetsk nucleus (1,670 launches, 25.2% of dataset)
+
+B) Dense Poster Swarm (Artistic Enhancement)
+
+Built on top of Variant A
+
+Adds an outer grain halo for readability and print contrast
+
+Used in the official challenge poster
+
+Fully documented in the Rmd for transparency
+
+Both variants are included in the upcoming R Markdown:
+✔ docs/Liftoff_Atlas_Cosmic_Swarm_Variants.Rmd (to be added)
+
+🌐 Reproducibility
+
+This repository follows a transparent, researcher-friendly structure:
 ```
 jsr-orbital-launch-history-1957-2024/
+│
+├── data/                ← All required input datasets
+├── outputs/             ← Generated plots (swarm, atlas, timelines)
+├── docs/                ← Full data-engineering and visualization pipelines
+│     ├── Liftoff Atlas JSR Data Engineering Pipeline by DV.Rmd
+│     ├── Liftoff_Atlas_Maven_Challenge_Poster.png
+│     └── Liftoff_Atlas_Cosmic_Swarm_Variants.Rmd   (upcoming)
 ├── README.md
-├── LICENSE
-├── data/
-│   ├── jsr_orbital_launches_1957_2024.csv      # canonical 6,617-launch dataset
-│   ├── LaunchSites_Final_Geocoded.csv          # 51 validated launch-site coordinates
-│   └── launchlog.tsv                           # original JSR raw export (~27k rows)
-├── docs/
-│   ├── liftoff_jsr_data_engineering.Rmd        # full reproducible ETL pipeline
-│   └── liftoff_jsr_visuals.Rmd                 # Atlas + timeline + swarm + SpaceX visuals
-└── outputs/                                    # optional exports added by users
+└── LICENSE (optional)
 ```
 
-# File Descriptions
-jsr_orbital_launches_1957_2024.csv
 
-Clean, deduped, launch-level dataset. One row = one launch.
+All code is written in R (tidyverse + ggplot2 + sf + ggforce) and runs on any standard R setup.
 
-LaunchSites_Final_Geocoded.csv
-
-Canonical table of 51 global launch sites, manually validated and geocoded for map-ready use.
-
-launchlog.tsv
-
-# Original Jonathan’s Space Report raw payload-level export (27k rows).
-
-docs/liftoff_jsr_data_engineering.Rmd
-
-Complete R Markdown documenting the entire ETL pipeline:
-
-raw ingestion
-
-date parsing
-
-normalization
-
-orbital filtering
-
-dedupe logic
-
-launch-ID construction
-
-validation
-
-final export
-
-Results in exactly 6,617 unique launches.
-
-docs/liftoff_jsr_visuals.Rmd
-
-# Reproducible visualizations:
-
-Humanity Launch Timeline
-
-Liftoff Atlas (global bubble map)
-
-Cosmic Swarm (one dot per launch)
-
-SpaceX vs Humanity cadence
-
-Launch site dominance charts
-
-# Data Dictionary
+Technical Glimpse (R)
 ```
-| Column         | Type      | Description                                      |
-|----------------|-----------|--------------------------------------------------|
-| `launch_id`    | character | Unique identifier for each launch event         |
-| `launch_date`  | datetime  | Parsed launch timestamp                          |
-| `year`         | integer   | Launch year                                      |
-| `rocket`       | character | Booster or launch vehicle                        |
-| `agency`       | character | Launch operator                                  |
-| `location`     | character | Launch site or pad                               |
-| `success`      | logical   | Mission success flag                             |
-| `success_hard` | logical   | Strict JSR-based success flag                    |
-| `notes`        | character | Additional context from JSR logs                 |
-| `…`            |           | Fields preserved exactly from JSR where relevant |
-
-```
-
-# Methodology (Reproducible)
-The full pipeline is documented here:
-/docs/liftoff_jsr_data_engineering.Rmd
-
-Summary of the R-based workflow:
-
-Import raw JSR .tsv (payload-level).
-
-Clean column names & standardize structure.
-
-Parse historical date formats (multiple patterns).
-
-Filter to orbital / failure codes (OS, OF, OP, OU).
-
-Normalize text fields (vehicle, agency, site, pad).
-
-Build a stable launch_id
-using timestamp + site + pad + vehicle + flight ID.
-
-Collapse payload rows → 1 launch per row.
-
-Validate counts against canonical totals.
-
-Export final 6,617-row dataset.
-
-Every step is transparent, fully reproducible, and tailored to preserve scientific accuracy.
-
-# Loading the Dataset
-R
+Load dataset
 library(readr)
+library(dplyr)
 
-df <- read_csv(
-  "data/jsr_orbital_launches_1957_2024.csv",
+missions <- read_csv(
+  "data/jsr_unique_launches_1957_2024.csv",
   show_col_types = FALSE
-)
+) |>
+  clean_names() |>
+  mutate(year = as.integer(year)) |>
+  filter(year >= 1957, year <= 2024)
+  ```
 
-# Citation
+Launches per year
+```
+missions |>
+  count(year, name = "launches") |>
+  ggplot(aes(year, launches)) +
+  geom_line(colour = "#FF4DA6", linewidth = 0.9) +
+  theme_minimal()
+  ```
 
-If you use this dataset, please cite:
+KPI Snapshot
+```
+jsr_kpi <- jsr |>
+  mutate(
+    outcome_group = case_when(
+      success_hard == TRUE ~ "Success",
+      success_hard == FALSE & success == FALSE ~ "Failure",
+      success_hard == FALSE & is.na(success) ~ "Partial / other",
+      TRUE ~ "Partial / other"
+    )
+  ) |>
+  count(outcome_group, name = "launches") |>
+  mutate(
+    total = sum(launches),
+    share = paste0(round(100 * launches / total, 1), "%")
+  )
+  ```
 
-Verma, D. (2024).
-JSR Orbital Launch History (1957–2024): A Clean, Deduped Dataset of Verified Orbital Launches.
-GitHub: https://github.com/dataninja88/jsr-orbital-launch-history-1957-2024
+Design & Storytelling
 
-Source data: Jonathan McDowell’s Satellite Launch Log (JSR)
+The visual system is inspired by:
+
+David McCandless – clarity, beauty, compression of complexity
+
+Federica Fragapane – soft cosmic geometry and living data patterns
+
+All charts were rendered in R, exported as transparent PNGs, and finalized in Figma.
 
 
-# License
-Full license in LICENSE.
+Maven Space Challenge Poster
 
-# Acknowledgements
+This is the exact submission poster combining the Cosmic Swarm, Liftoff Atlas world map, humanity’s launch timeline, and SpaceX cadence chart.
 
-Jonathan McDowell for maintaining JSR, the gold standard for orbital launch records.
+🔗 Links
 
-Global launch providers (NASA, ESA, CNSA, Roscosmos, ISRO, SpaceX, and more).
+JSR Dataset (canonical): data/jsr_unique_launches_1957_2024.csv
 
-The broader aerospace data community for cross-referencing annual totals.
+Full Data Engineering Pipeline: docs/Liftoff Atlas JSR Data Engineering Pipeline by DV.Rmd
 
-# Maintained By
+Maven Submission Poster: docs/Liftoff_Atlas_Maven_Challenge_Poster.png
 
-Dev Verma
-Data Analyst · R Programmer · Aviation & Space Data Enthusiast
-📧 dev.dataanalyst8@gmail.com
+Open-source, reproducible, extendable.
 
-🌐 GitHub: @dataninja88
+“Every launch is a leap; and every leap leaves its trace in data.” — Dev
