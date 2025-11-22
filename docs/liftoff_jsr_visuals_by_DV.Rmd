@@ -1,0 +1,616 @@
+---
+title: "Liftoff Atlas | Visuals from JSR Orbital Launch History (1957–2024)"
+author: "Dev Verma"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+
+# Core packages
+library(readr)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(ggplot2)
+library(janitor)
+
+# Mapping packages
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+
+# Create outputs folder (relative to this .Rmd)
+if (!dir.exists("outputs")) dir.create("outputs")
+
+# Theme colours for Liftoff Atlas
+atlas_pink <- "#FF4DA6"
+atlas_grey <- "#9AA0A6"
+
+# Historical bounds
+year_min_hist <- 1957L
+year_max_hist <- 2024L
+
+# Paths (this .Rmd lives in MavenSpace/, data lives in MavenSpace/data/)
+jsr_path   <- "data/jsr_unique_launches_1957_2024.csv"
+sites_path <- "data/LaunchSites_Final_Geocoded.csv"
+```
+
+##Load canonical JSR dataset & launch-site geography
+
+```{r}
+# Load JSR canonical dataset (6,617 launches)
+
+jsr <- read_csv(jsr_path, show_col_types = FALSE) %>%
+clean_names() %>%
+mutate(
+launch_date = as_datetime(dt_min),
+year        = year(launch_date)
+) %>%
+filter(
+!is.na(year),
+year >= year_min_hist,
+year <= year_max_hist
+)
+
+nrow(jsr)
+n_distinct(jsr$launch_id)
+
+# Load geocoded launch sites
+
+sites <- read_csv(sites_path, show_col_types = FALSE) %>%
+clean_names()
+
+head(sites)
+```
+
+## 2. Outcome breakdown (Success / Failure / Partial)
+
+```{r}
+jsr_kpi <- jsr %>%
+mutate(
+outcome_group = dplyr::case_when(
+success_hard == TRUE                             ~ "Success",
+success_hard == FALSE & success == FALSE         ~ "Failure",
+TRUE                                             ~ "Partial / other"
+)
+) %>%
+count(outcome_group, name = "launches") %>%
+mutate(
+total = sum(launches),
+share = round(100 * launches / total, 1)
+)
+
+jsr_kpi
+```
+
+## 3. Humanity’s orbital cadence (1957–2024)
+An annual time-series of orbital launches using only the canonical JSR dataset.
+
+```{r}
+jsr_yearly <- jsr %>%
+count(year, name = "launches") %>%
+arrange(year)
+
+head(jsr_yearly)
+
+# Era bands for subtle background context
+
+eras <- tibble::tribble(
+~xmin, ~xmax, ~label,
+1957, 1975, "Space Race",
+1981, 2011, "Space Shuttle Era",
+2012, 2024, "NewSpace & Reusability"
+)
+
+p_humanity <- ggplot() +
+
+# Era shading
+
+geom_rect(
+data  = eras,
+aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
+fill  = "black",
+alpha = 0.03,
+inherit.aes = FALSE
+) +
+geom_text(
+data = eras,
+aes(x = (xmin + xmax) / 2, y = Inf, label = label),
+vjust = 1.4,
+size  = 3,
+colour = "#666666"
+) +
+
+# Area + line
+
+geom_area(
+data = jsr_yearly,
+aes(x = year, y = launches),
+fill  = atlas_pink,
+alpha = 0.35
+) +
+geom_line(
+data = jsr_yearly,
+aes(x = year, y = launches),
+colour    = atlas_pink,
+linewidth = 0.9
+) +
+scale_x_continuous(
+breaks = seq(1960, 2020, by = 10),
+expand = expansion(mult = c(0, 0.01))
+) +
+scale_y_continuous(
+expand = expansion(mult = c(0, 0.08))
+) +
+labs(
+title    = "Humanity’s Orbital Launches · 1957–2024",
+subtitle = "Annual count of verified orbital launches (JSR canonical dataset)",
+x        = NULL,
+y        = "Launches per year"
+) +
+theme_minimal() +
+theme(
+plot.background   = element_rect(fill = "transparent", colour = NA),
+panel.background  = element_rect(fill = "transparent", colour = NA),
+panel.grid.major.x = element_blank(),
+panel.grid.minor   = element_blank(),
+legend.position   = "none",
+plot.title.position = "plot"
+)
+
+p_humanity
+
+```
+```{r}
+ggsave(
+filename = "outputs/line_humanity_jsr_1957_2024.png",
+plot     = p_humanity,
+width    = 2600 / 300,
+height   = 900  / 300,
+dpi      = 300,
+bg       = "transparent"
+)
+# The PNG is now ready to drop straight into Figma.
+```
+
+## 4. Liftoff Atlas — global launch-site map
+Use LaunchSites_Final_Geocoded.csv for the world map bubbles.
+This file should already have one row per canonical launch site, with
+columns such as site_name, latitude, longitude, and n (launch count).
+
+```{r}
+world <- rnaturalearth::ne_countries(
+scale       = "medium",
+returnclass = "sf"
+)
+
+p_atlas <- ggplot() +
+
+# Basemap
+
+geom_sf(
+data   = world,
+fill   = "black",
+colour = "#333333",
+linewidth = 0.1
+) +
+
+# Launch-site bubbles
+
+geom_point(
+data = sites,
+aes(
+x    = longitude,
+y    = latitude,
+size = n
+),
+colour = atlas_pink,
+alpha  = 0.45,
+stroke = 0
+) +
+scale_size_area(
+max_size = 18,
+breaks   = c(50, 250, 500, 1000, 1500),
+name     = "Launches"
+) +
+coord_sf(expand = FALSE) +
+labs(
+title    = "Liftoff Atlas · Global Orbital Launch Sites",
+subtitle = "Bubble size represents total orbital launches per site (JSR 1957–2024)",
+x        = NULL,
+y        = NULL
+) +
+theme_void() +
+theme(
+plot.background   = element_rect(fill = "transparent", colour = NA),
+panel.background  = element_rect(fill = "transparent", colour = NA),
+legend.position   = "right",
+legend.title      = element_text(size = 8),
+legend.text       = element_text(size = 7),
+plot.title.position = "plot"
+)
+
+p_atlas
+
+ggsave(
+filename = "outputs/map_liftoff_atlas_jsr.png",
+plot     = p_atlas,
+width    = 3000 / 300,
+height   = 1600 / 300,
+dpi      = 300,
+bg       = "transparent"
+)
+
+```
+
+
+## 5. SpaceX orbital launches over time
+Isolate SpaceX from JSR (agency code "SPX") and show its growth.
+
+```{r}
+spacex_ts <- jsr %>%
+filter(agency == "SPX") %>%
+count(year, name = "launches") %>%
+arrange(year)
+
+spacex_ts
+```
+
+```{r SpaceX visual}
+p_spacex <- ggplot(spacex_ts, aes(x = year, y = launches)) +
+geom_line(
+colour    = atlas_pink,
+linewidth = 1.0
+) +
+geom_point(
+colour = atlas_pink,
+size   = 2
+) +
+scale_x_continuous(
+breaks = seq(min(spacex_ts$year, na.rm = TRUE),
+max(spacex_ts$year, na.rm = TRUE),
+by = 2),
+expand = expansion(mult = c(0.01, 0.01))
+) +
+scale_y_continuous(
+expand = expansion(mult = c(0, 0.08))
+) +
+labs(
+title    = "SpaceX Orbital Launches · 2006–2024 (JSR)",
+subtitle = "Verified orbital launches attributed to SpaceX in the JSR dataset",
+x        = NULL,
+y        = "Launches per year"
+) +
+theme_minimal() +
+theme(
+plot.background   = element_rect(fill = "transparent", colour = NA),
+panel.background  = element_rect(fill = "transparent", colour = NA),
+panel.grid.major.x = element_blank(),
+panel.grid.minor   = element_blank(),
+plot.title.position = "plot"
+)
+
+p_spacex
+
+ggsave(
+filename = "outputs/line_spacex_jsr_2006_2024.png",
+plot     = p_spacex,
+width    = 3200 / 300,
+height   = 1280 / 300,
+dpi      = 300,
+bg       = "transparent"
+)
+```
+### You can add milestone labels (first Falcon 1, first Falcon 9, record years) later in Figma.
+
+## 6. Cosmic Swarm A – Launch-true radial visualization (1 dot = 1 launch)
+This version uses the canonical JSR launch table:
+
+- 1 row in `jsr_unique_launches_1957_2024.csv` = **1 point**
+- Radius encodes **year** (1957 → inner rings, 2024 → outer edge)
+- The most active site (Plesetsk) forms the **pink core**
+- All other sites form the dark grain field
+
+```{r cosmic_swarm_A, message=FALSE, warning=FALSE}
+library(readr);  library(dplyr);  library(stringr); library(janitor)
+library(ggplot2); library(ggforce); library(scales)
+
+if (!dir.exists("outputs")) dir.create("outputs")
+
+atlas_pink <- "#FF4DA6"
+ink_dark   <- "#000000"
+ring_ink   <- "#111111"
+
+set.seed(1957)
+
+csv_jsr   <- "data/jsr_unique_launches_1957_2024.csv"
+csv_alias <- "data/site_alias.csv"
+csv_canon <- "data/canon_48.csv"
+
+# 1) Load canonical launch table + mapping dictionaries -----------------------
+u      <- read_csv(csv_jsr,   show_col_types = FALSE) |> clean_names()
+alias  <- read_csv(csv_alias, show_col_types = FALSE) |> clean_names()
+canon  <- read_csv(csv_canon, show_col_types = FALSE) |> clean_names()
+
+# Normalise site strings (same logic as data-engineering pipeline)
+norm <- function(x){
+  x |>
+    stringr::str_to_upper() |>
+    stringr::str_replace_all("[\u00A0]", " ") |>
+    stringr::str_replace_all("[^A-Z0-9 /-]", " ") |>
+    stringr::str_squish()
+}
+
+u_map <- u |>
+  transmute(
+    launch_id,
+    year  = as.integer(year),
+    alias = norm(coalesce(site_raw, pad_raw))
+  ) |>
+  left_join(alias |> mutate(alias = norm(alias)), by = "alias") |>
+  rename(site_key = site_key)
+
+# Hard guardrail: every launch must map to a canonical site
+stopifnot(sum(is.na(u_map$site_key)) == 0)
+
+# Identify nucleus site (most launches)
+top_site <- u_map |>
+  count(site_key, sort = TRUE) |>
+  slice(1) |>
+  pull(site_key)
+
+# 2) Build 1:1 coordinates (6,617 points) ------------------------------------
+year_min <- 1957L
+year_max <- 2024L
+
+core_sd  <- 0.028  # size of pink nucleus cloud
+ring_min <- 0.10   # inner padding radius
+ring_max <- 1.00   # outer radius
+j_rad_sd <- 0.006  # small radial jitter
+
+core_df <- u_map |> filter(site_key == top_site)
+oth_df  <- u_map |> filter(site_key != top_site)
+
+# Pink core around origin
+n_core <- nrow(core_df)
+core_xy <- tibble::tibble(
+  x   = rnorm(n_core, mean = 0, sd = core_sd),
+  y   = rnorm(n_core, mean = 0, sd = core_sd),
+  grp = "core"
+)
+
+# Map year → radius, then add jitter
+scale_r <- function(y){
+  t <- (pmax(pmin(y, year_max), year_min) - year_min) / (year_max - year_min)
+  rescale(t, to = c(ring_min, ring_max))
+}
+
+n_oth <- nrow(oth_df)
+ang   <- runif(n_oth, 0, 2 * pi)
+rad   <- scale_r(oth_df$year) + rnorm(n_oth, 0, j_rad_sd)
+
+oth_xy <- tibble::tibble(
+  x   = rad * cos(ang),
+  y   = rad * sin(ang),
+  grp = "others"
+)
+
+swarm <- dplyr::bind_rows(core_xy, oth_xy)
+
+# Sanity check: 1 dot per launch
+nrow(swarm); dplyr::n_distinct(u_map$launch_id)
+
+# Decade guide rings (1957, 1960, …, 2020)
+decades <- tibble::tibble(
+  year_break = c(1957, seq(1960, 2020, by = 10))
+) |>
+  mutate(r = scale_r(year_break))
+
+# 3) Plot + export ------------------------------------------------------------
+p_cosmic <- ggplot() +
+  # Decade rings
+  geom_circle(
+    data = decades,
+    aes(x0 = 0, y0 = 0, r = r),
+    color     = alpha(ring_ink, 0.32),
+    linetype  = "dotted",
+    linewidth = 0.35
+  ) +
+  # All other launches (dark dust)
+  geom_point(
+    data  = dplyr::filter(swarm, grp == "others"),
+    aes(x, y),
+    color = alpha(ink_dark, 0.70),
+    size  = 0.28,
+    stroke = 0
+  ) +
+  # Nucleus (Plesetsk) in pink
+  geom_point(
+    data  = dplyr::filter(swarm, grp == "core"),
+    aes(x, y),
+    color = atlas_pink,
+    alpha = 0.70,
+    size  = 0.32,
+    stroke = 0
+  ) +
+  coord_equal(xlim = c(-1.06, 1.06), ylim = c(-1.06, 1.06), expand = FALSE) +
+  theme_void() +
+  theme(
+    plot.background  = element_rect(fill = "transparent", colour = NA),
+    panel.background = element_rect(fill = "transparent", colour = NA),
+    plot.margin      = margin(0, 0, 0, 0)
+  )
+
+p_cosmic
+
+ggsave(
+  filename = "outputs/swarm_historical.png",
+  plot     = p_cosmic,
+  width    = 4096,
+  height   = 4096,
+  units    = "px",
+  dpi      = 320,
+  bg       = "transparent"
+)
+```
+
+7. Cosmic Swarm B – Dense poster variant (grain halo)
+
+This version does not change the data story.
+It builds a synthetic grain field around a pink core to create the dark, inky halo used in the printed poster:
+
+Used only for the final aesthetic in Figma
+
+Launch-true story still comes from Variant A
+
+Exported as a separate PNG so viewers can distinguish them
+
+```{r}
+library(dplyr);  library(ggplot2); library(tibble); library(scales)
+
+if (!dir.exists("outputs")) dir.create("outputs")
+
+atlas_pink <- "#FF4DA6"
+
+# --- Parameters (tuned to match poster aesthetic) ---------------------------
+
+set.seed(1957)
+
+# Core (pink nucleus)
+
+N_core   <- 52000      # number of pink points
+r_core   <- 0.50       # core radius
+j_core   <- 0.06       # small jitter to avoid banding
+
+# Concentric black rings (outer grain halo)
+
+rings <- tibble(
+r   = c(0.72, 0.98, 1.25, 1.52, 1.78, 2.00),
+sd  = c(0.045, 0.055, 0.060, 0.065, 0.070, 0.080),
+pct = c(0.22, 0.24, 0.22, 0.17, 0.10, 0.05)
+)
+
+N_total_others <- 260000  # total black dots across all rings
+
+# --- Build pink core (uniform disk + fine jitter) ---------------------------
+
+u_core  <- sqrt(runif(N_core, 0, r_core^2))
+th_core <- runif(N_core, 0, 2 * pi)
+
+core <- tibble(
+grp   = "core",
+x     = u_core * cos(th_core) + rnorm(N_core, 0, j_core),
+y     = u_core * sin(th_core) + rnorm(N_core, 0, j_core),
+alpha = 0.40,
+size  = 0.18
+)
+
+# --- Build concentric rings (outer halo) ------------------------------------
+
+set.seed(1957 + 1)
+
+others <- rings |>
+rowwise() |>
+do({
+n  <- round(N_total_others * .$pct)
+ph <- runif(n, 0, 2 * pi)
+rd <- pmax(r_core + 0.04, rnorm(n, .$r, .$sd))  # keep outside pink core
+
+tibble(
+  grp   = "others",
+  x     = rd * cos(ph),
+  y     = rd * sin(ph),
+  # opacity peaks near ring centre → inky bands
+  alpha = rescale(abs(rd - .$r), to = c(0.55, 0.15), from = c(.$sd, 0)),
+  size  = 0.16
+)
+
+
+}) |>
+bind_rows() |>
+mutate(alpha = pmin(pmax(alpha, 0.12), 0.60))      # clamp alpha range
+
+swarm_dense <- bind_rows(core, others)
+
+# --- Plot dense swarm -------------------------------------------------------
+
+p_swarm_dense <- ggplot(swarm_dense, aes(x, y)) +
+geom_point(
+data  = subset(swarm_dense, grp == "others"),
+aes(alpha = alpha),
+colour = "black",
+size   = 0.16,
+show.legend = FALSE
+) +
+geom_point(
+data  = subset(swarm_dense, grp == "core"),
+colour = atlas_pink,
+alpha  = 0.38,
+size   = 0.18,
+show.legend = FALSE
+) +
+
+# subtle bloom at the centre to help the core pop on a light background
+
+annotate("point", x = 0, y = 0, size = 90,
+colour = atlas_pink, alpha = 0.10) +
+coord_equal(xlim = c(-2.15, 2.15), ylim = c(-2.15, 2.15), expand = FALSE) +
+theme_void() +
+theme(
+plot.background  = element_rect(fill = "transparent", colour = NA),
+panel.background = element_rect(fill = "transparent", colour = NA),
+plot.margin      = margin(0, 0, 0, 0)
+)
+
+p_swarm_dense
+
+ggsave(
+filename = "outputs/swarm_dense_poster_github.png",
+plot     = p_swarm_dense,
+width    = 6000 / 300,
+height   = 6000 / 300,
+units    = "in",
+dpi      = 300,
+bg       = "transparent"
+)
+
+```
+
+
+
+## 8. How these visuals connect to the poster
+
+This document is the visual companion to the data-engineering pipeline.  
+Every chart on the *Liftoff Atlas* poster is generated here from the canonical JSR launch table:
+
+- **Humanity’s cadence** (`outputs/line_humanity_jsr_1957_2024.png`)  
+  One line per year, using only `jsr_unique_launches_1957_2024.csv`.
+
+- **Liftoff Atlas map** (`outputs/map_liftoff_atlas_jsr.png`)  
+  Bubbles are aggregated from `LaunchSites_Final_Geocoded.csv`. Each point is one geocoded launch site with a verified count.
+
+- **SpaceX timeline** (`outputs/line_spacex_jsr_2006_2024.png`)  
+  Filters the same table down to `agency == "SPX"` and counts launches per year.
+
+- **Cosmic Swarm A – launch-true** (`outputs/swarm_historical.png`)  
+  One point per verified orbital launch. Radius encodes year, colour encodes the most active site versus all others.
+
+- **Cosmic Swarm B – dense poster variant** (`outputs/swarm_dense_poster_github.png`)  
+  A synthetic grain field wrapped around a pink core. It keeps the same visual metaphor as A, but adds extra dots to create the inky halo used in the printed poster.  
+  The underlying statistics and launch counts always come from Variant A and the JSR dataset, not from this stylised grain.
+
+Together, these files form a reproducible bridge between the raw JSR launch log and the final visual story used for the Maven Space Challenge poster.
+
+If you clone this repository, place the CSV files in `data/`, and knit this R Markdown file, you should see the same KPIs and PNGs.  
+If anything drifts from the numbers reported on the poster (for example, 6,617 launches, 6,126 successes, 408–410 failures, 81 partial/other), please open an issue on GitHub so we can trace and document the change.
+
+---
+
+*Every launch here is both a line of code and a line in history.  
+My hope is that this repo makes it easy for others to audit, remix, and extend the Liftoff Atlas so the record of humanity’s climb into orbit stays transparent and open.*
