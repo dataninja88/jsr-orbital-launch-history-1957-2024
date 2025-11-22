@@ -34,7 +34,7 @@ Fully reproducible files stored in clean repository structure
 jsr-orbital-launch-history-1957-2024/
 │
 ├── data/                          
-│     ├── jsr_unique_launches_1957_2024.csv
+│     ├── jsr_orbital_launches_1957_2024.csv
 │     ├── LaunchSites_Final_Geocoded.csv
 │     ├── site_alias.csv
 │     ├── canon_48.csv
