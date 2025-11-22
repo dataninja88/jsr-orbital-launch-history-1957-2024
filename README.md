@@ -1,200 +1,192 @@
-# Liftoff Atlas | Humanity’s Orbital Launch History (1957–2024)
+# Liftoff Atlas
+Orbital Launch History (1957–2024) — Cleaned, Verified, and Visualised
 
 By Dev Verma
-# Repository: jsr-orbital-launch-history-1957-2024
 
-This repository contains the canonical, reproducible, launch-level dataset of 6,617 verified orbital launches (1957–2024), engineered from Jonathan McDowell’s Satellite Launch Log (JSR). It also hosts the full data-engineering pipeline, validation steps, and all final visualizations used for the 2025 Maven Space Data Challenge.
+# Overview
 
-# Project Summary
+Liftoff Atlas is a reproducible space-launch analysis and visual storytelling project built for the Maven Space Challenge 2025.
 
-Every orbital launch begins as a line of code, a burst of fire, and a database entry.
-Together, these events trace humanity’s ascent into orbit.
+At its core is a rigorously engineered dataset:
 
-For the Maven Space Data Challenge 2025, I rebuilt the orbital record from the ground up, cross-validating:
+6,617 verified orbital launches
 
-JSR launchlog.tsv (≈27k payload rows)
+1957–2024, derived from Jonathan’s Space Report (JSR)
 
-cleaned + deduped to 6,617 unique orbital launches
+Fully deduped, parsed, and site-normalized
 
-timestamp normalization
+Mapped to 51 canonical launch sites through a structured mapping pipeline
 
-outcome classification
+# The project includes:
 
-site canonicalization (51 launch sites)
+Complete data-engineering workflow in R
 
-R-based reproducibility from ingestion → final charts
+Full visual suite: timelines, global atlas, SpaceX trajectory
 
-This repository contains the exact pipeline and all supporting datasets required to regenerate the full project.
+Cosmic Swarm A and Cosmic Swarm B
 
-# Key Outputs in This Repository
+High-resolution Maven competition poster
 
-1. Canonical Verified Launch Dataset
+Fully reproducible files stored in clean repository structure
 
-✔ data/jsr_unique_launches_1957_2024.csv
-→ 6,617 deduped launches
-→ 1957–2024
-→ Launch-true: one row = one real launch, no estimates
-
-2. Data-Engineering Pipeline
-
-✔ docs/Liftoff Atlas JSR Data Engineering Pipeline by DV.Rmd
-→ full cleaning, collapsing, datetime parsing, and validation
-→ defines canonical launch_id
-→ produces all downstream-ready tables
-
-3. Cosmic Swarm (Two Variants)
-
-Historical (1-dot-per-launch)
-
-Launch-true
-
-6,617 points
-
-Used for analysis, timeline interpretation, decade rings
-
-Dense Poster Variant (with grain)
-
-Adds a procedural grain halo around the launch-true base
-
-Used only for the published poster
-
-Fully documented in the Rmd
-
-4. Liftoff Atlas Poster
-
-✔ docs/Liftoff_Atlas_Maven_Challenge_Poster.png
-The full 2025 Maven Space Challenge submission containing:
-
-Cosmic Swarm
-
-Global launch footprint (51 sites)
-
-Humanity’s launch timeline
-
-SpaceX trajectory chart
-
-Rendered in R (ggplot2) and refined in Figma.
-
-# Launch KPIs (1957–2024)
-
-Derived from the canonical JSR dataset.
-
-Total launches: 6,617
-
-Success: 6,126 (92.6%)
-
-Failure: 410 (6.2%)
-
-Partial / Other: 81 (1.2%)
-
-# Cosmic Swarm Variants (A & B)
-A) Historical Swarm (Launch-True)
-
-Exactly 6,617 points
-
-One point per verified orbital launch
-
-Decade rings, year-radiating structure
-
-Highlight: Plesetsk nucleus (1,670 launches, 25.2% of dataset)
-
-B) Dense Poster Swarm (Artistic Enhancement)
-
-Built on top of Variant A
-
-Adds an outer grain halo for readability and print contrast
-
-Used in the official challenge poster
-
-Fully documented in the Rmd for transparency
-
-Both variants are included in the upcoming R Markdown:
-✔ docs/Liftoff_Atlas_Cosmic_Swarm_Variants.Rmd (to be added)
-
-🌐 Reproducibility
-
-This repository follows a transparent, researcher-friendly structure:
+# Repository Structure
 ```
 jsr-orbital-launch-history-1957-2024/
 │
-├── data/                ← All required input datasets
-├── outputs/             ← Generated plots (swarm, atlas, timelines)
-├── docs/                ← Full data-engineering and visualization pipelines
-│     ├── Liftoff Atlas JSR Data Engineering Pipeline by DV.Rmd
+├── data/                          
+│     ├── jsr_unique_launches_1957_2024.csv
+│     ├── LaunchSites_Final_Geocoded.csv
+│     ├── site_alias.csv
+│     ├── canon_48.csv
+│     └── (reference inputs)
+│
+├── docs/
+│     ├── Liftoff_Atlas_JSR_Data_Engineering_Pipeline_by_DV.Rmd
+│     ├── Liftoff_Atlas_JSR_Visuals_by_DV.Rmd
+│     ├── Liftoff_Atlas_JSR_Visuals_by_DV.html
 │     ├── Liftoff_Atlas_Maven_Challenge_Poster.png
-│     └── Liftoff_Atlas_Cosmic_Swarm_Variants.Rmd   (upcoming)
-├── README.md
-└── LICENSE (optional)
+│     ├── Liftoff_Atlas_Maven_Challenge_Poster.pdf
+│     ├── swarm_historical.png                 # Cosmic Swarm A
+│     └── swarm_dense_poster_github.png        # Cosmic Swarm B
+│
+├── R/
+│     └── (supporting scripts if added later)
+│
+├── LICENSE
+└── README.md
 ```
 
+Note:
+All visual exports are intentionally stored in /docs for easier viewing directly on GitHub.
+No outputs/ directory is required.
 
-All code is written in R (tidyverse + ggplot2 + sf + ggforce) and runs on any standard R setup.
+# 1. Data Engineering Pipeline
 
-Technical Glimpse (R)
-```
-Load dataset
-library(readr)
-library(dplyr)
+Full step-by-step logic is documented in:
 
-missions <- read_csv(
-  "data/jsr_unique_launches_1957_2024.csv",
-  show_col_types = FALSE
-) |>
-  clean_names() |>
-  mutate(year = as.integer(year)) |>
-  filter(year >= 1957, year <= 2024)
-  ```
+📄 docs/Liftoff_Atlas_JSR_Data_Engineering_Pipeline_by_DV.Rmd
 
-Launches per year
-```
-missions |>
-  count(year, name = "launches") |>
-  ggplot(aes(year, launches)) +
-  geom_line(colour = "#FF4DA6", linewidth = 0.9) +
-  theme_minimal()
-  ```
+Included steps:
 
-KPI Snapshot
-```
-jsr_kpi <- jsr |>
-  mutate(
-    outcome_group = case_when(
-      success_hard == TRUE ~ "Success",
-      success_hard == FALSE & success == FALSE ~ "Failure",
-      success_hard == FALSE & is.na(success) ~ "Partial / other",
-      TRUE ~ "Partial / other"
-    )
-  ) |>
-  count(outcome_group, name = "launches") |>
-  mutate(
-    total = sum(launches),
-    share = paste0(round(100 * launches / total, 1), "%")
-  )
-  ```
+Load raw JSR launch log
 
-Design & Storytelling
+Clean & normalize fields (dates, sites, pads, success outcomes)
 
-The visual system is inspired by:
+Remove non-orbital entries
 
-David McCandless – clarity, beauty, compression of complexity
+Collapse multi-payload lines into launch-level rows
 
-Federica Fragapane – soft cosmic geometry and living data patterns
+Apply structured alias → canonical site mapping
 
-All charts were rendered in R, exported as transparent PNGs, and finalized in Figma.
+Validate 100% mapping resolution
 
+Export final canonical dataset:
+data/jsr_unique_launches_1957_2024.csv
 
-Maven Space Challenge Poster
+This file is the authoritative dataset powering all visuals.
 
-This is the exact submission poster combining the Cosmic Swarm, Liftoff Atlas world map, humanity’s launch timeline, and SpaceX cadence chart.
+# 2. Visualisation Pipeline
 
-🔗 Links
+All visuals, timelines, maps, and swarm variants are generated through:
 
-JSR Dataset (canonical): data/jsr_unique_launches_1957_2024.csv
+📄 docs/Liftoff_Atlas_JSR_Visuals_by_DV.Rmd
+🌐 docs/Liftoff_Atlas_JSR_Visuals_by_DV.html (for direct GitHub viewing)
 
-Full Data Engineering Pipeline: docs/Liftoff Atlas JSR Data Engineering Pipeline by DV.Rmd
+Includes:
 
-Maven Submission Poster: docs/Liftoff_Atlas_Maven_Challenge_Poster.png
+Humanity’s orbital cadence (1957–2024)
 
-Open-source, reproducible, extendable.
+Liftoff Atlas (global launch-site bubble map)
 
-“Every launch is a leap; and every leap leaves its trace in data.” — Dev
+SpaceX’s orbital growth (2006–2024)
+
+Cosmic Swarm A — launch-true
+
+Cosmic Swarm B — dense poster variant
+
+PNG files are stored inside /docs.
+
+# 3. Cosmic Swarm Variants
+A) Cosmic Swarm A — Launch-True (Analytical)
+
+📸 docs/swarm_historical.png
+
+6,617 points = 6,617 launches
+
+Radius encodes year (1957 → 2024)
+
+Pink nucleus = Plesetsk Cosmodrome
+
+Outer rings = remaining global sites
+
+Used for accurate analysis and storytelling
+
+B) Cosmic Swarm B — Dense Poster Variant (Artistic)
+
+📸 docs/swarm_dense_poster_github.png
+
+Synthesized high-density grain field
+
+Concentric inky halos
+
+Bloom-enhanced pink core
+
+Used only for poster aesthetics
+
+Code included in visuals Rmd for transparency
+
+This preserves a clear boundary between data-honest visualisation and creative rendering.
+
+# 4. Maven Challenge Poster
+
+📸 Stored in /docs:
+
+Liftoff_Atlas_Maven_Challenge_Poster.png
+
+Liftoff_Atlas_Maven_Challenge_Poster.pdf
+
+A final composition combining:
+
+World Atlas
+
+Humanity timeline
+
+SpaceX trajectory
+
+Fully polished Cosmic Swarm
+
+Figma-styled layout
+
+# 5. Reproducibility
+
+Every figure in this repository can be rebuilt by:
+
+Opening the .Rmd files in RStudio
+
+Keeping the data/ folder unchanged
+
+Clicking Knit
+
+Outputs will match the poster exactly.
+
+# 6. Acknowledgements
+
+Jonathan’s Space Report (JSR)
+
+rnaturalearth, ggplot2, ggforce, sf
+
+Maven Analytics for the challenge framework
+
+# 7. Closing Note
+
+Liftoff Atlas became more than a competition entry.
+It turned into a complete archival map of humanity’s journey into orbit, built line by line, launch by launch, inside R.
+
+Every ring, dot, and orbit in this project carries a real moment of human ambition.
+Rebuilding this dataset taught me precision, patience, and the importance of reproducibility in storytelling.
+
+If you explore or extend this dataset, I’d love to see what you create.
+
+Clear skies,
+
+DV
