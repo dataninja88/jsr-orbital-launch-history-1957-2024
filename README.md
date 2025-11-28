@@ -1,5 +1,5 @@
 # Liftoff Atlas
-Orbital Launch History (1957–2024) — Cleaned, Verified, and Visualised
+Orbital Launch History (1957–2024) | Cleaned, Verified, and Visualised
 
 By Dev Verma
 
@@ -43,7 +43,6 @@ jsr-orbital-launch-history-1957-2024/
 ├── docs/
 │     ├── Liftoff_Atlas_JSR_Data_Engineering_Pipeline_by_DV.Rmd
 │     ├── Liftoff_Atlas_JSR_Visuals_by_DV.Rmd
-│     ├── Liftoff_Atlas_JSR_Visuals_by_DV.html
 │     ├── Liftoff_Atlas_Maven_Challenge_Poster.png
 │     ├── Liftoff_Atlas_Maven_Challenge_Poster.pdf
 │     ├── swarm_historical.png                 # Cosmic Swarm A
@@ -100,14 +99,14 @@ Liftoff Atlas (global launch-site bubble map)
 
 SpaceX’s orbital growth (2006–2024)
 
-Cosmic Swarm A — launch-true
+Cosmic Swarm A | launch-true
 
-Cosmic Swarm B — dense poster variant
+Cosmic Swarm B | dense poster variant
 
 PNG files are stored inside /docs.
 
 # 3. Cosmic Swarm Variants
-A) Cosmic Swarm A — Launch-True (Analytical)
+A) Cosmic Swarm A | Launch-True (Analytical)
 
 📸 docs/swarm_historical.png
 
@@ -121,7 +120,7 @@ Outer rings = remaining global sites
 
 Used for accurate analysis and storytelling
 
-B) Cosmic Swarm B — Dense Poster Variant (Artistic)
+B) Cosmic Swarm B | Dense Poster Variant (Artistic)
 
 📸 docs/swarm_dense_poster_github.png
 
